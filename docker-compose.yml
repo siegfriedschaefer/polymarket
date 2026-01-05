@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: polymarket-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - polymarket-network
+
+  bot:
+    build:
+      context: .
+      target: development
+    container_name: polymarket-bot
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - polymarket-network
+    command: python -m polymarket_bot.main
+
+  celery-worker:
+    build:
+      context: .
+      target: development
+    container_name: polymarket-celery-worker
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - polymarket-network
+    command: celery -A polymarket_bot.tasks.celery_app worker --loglevel=info
+
+  celery-beat:
+    build:
+      context: .
+      target: development
+    container_name: polymarket-celery-beat
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - polymarket-network
+    command: celery -A polymarket_bot.tasks.celery_app beat --loglevel=info
+
+  flower:
+    build:
+      context: .
+      target: development
+    container_name: polymarket-flower
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    ports:
+      - "5555:5555"
+    volumes:
+      - ./src:/app/src
+    networks:
+      - polymarket-network
+    command: celery -A polymarket_bot.tasks.celery_app flower --port=5555
+
+networks:
+  polymarket-network:
+    driver: bridge
+
+volumes:
+  redis_data:
