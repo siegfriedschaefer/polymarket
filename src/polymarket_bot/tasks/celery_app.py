@@ -1,7 +1,6 @@
 """Celery application configuration."""
 
 from celery import Celery
-from celery.schedules import crontab
 
 from polymarket_bot.config import settings
 from polymarket_bot.utils.logging import setup_logging

@@ -20,17 +20,25 @@ class PolymarketClient:
             api_passphrase=settings.polymarket_passphrase,
         )
 
-        self.client = ClobClient(
-            host="https://clob.polymarket.com",
-            chain_id=settings.polymarket_chain_id,
-            key=settings.polymarket_api_key,
-            creds=self.credentials,
-        )
+        # Initialize client
+        # Private key is required for trading operations
+        # For read-only access, credentials are sufficient
+        client_kwargs = {
+            "host": "https://clob.polymarket.com",
+            "chain_id": settings.polymarket_chain_id,
+            "creds": self.credentials,
+        }
+
+        if settings.polymarket_private_key:
+            client_kwargs["key"] = settings.polymarket_private_key
+
+        self.client = ClobClient(**client_kwargs)
 
         logger.info(
             "polymarket_client_initialized",
             chain_id=settings.polymarket_chain_id,
             trading_enabled=settings.enable_trading,
+            has_private_key=bool(settings.polymarket_private_key),
         )
 
     async def get_markets(self, **kwargs):

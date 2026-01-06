@@ -1,10 +1,11 @@
 """Example trading strategy implementation."""
 
 from typing import Any
+
 import structlog
 
-from polymarket_bot.strategies.base import BaseStrategy
 from polymarket_bot.api.client import PolymarketClient
+from polymarket_bot.strategies.base import BaseStrategy
 
 logger = structlog.get_logger(__name__)
 

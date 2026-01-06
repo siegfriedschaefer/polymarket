@@ -3,12 +3,13 @@
 import asyncio
 import signal
 import sys
+
 import structlog
 
-from polymarket_bot.config import settings
-from polymarket_bot.utils.logging import setup_logging
 from polymarket_bot.api.client import get_client
+from polymarket_bot.config import settings
 from polymarket_bot.strategies.example import ExampleStrategy
+from polymarket_bot.utils.logging import setup_logging
 
 logger = structlog.get_logger(__name__)
 

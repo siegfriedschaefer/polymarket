@@ -1,12 +1,22 @@
 """Tests for configuration module."""
 
-import pytest
+from pydantic_settings import SettingsConfigDict
+
 from polymarket_bot.config import Settings
+
+
+class IsolatedSettings(Settings):
+    """Settings class that doesn't load from .env file for testing."""
+    model_config = SettingsConfigDict(
+        env_file=None,
+        extra="ignore"
+    )
 
 
 def test_settings_default_values():
     """Test that settings have sensible defaults."""
-    settings = Settings(
+    # Create settings without loading from .env file
+    settings = IsolatedSettings(
         polymarket_api_key="test_key",
         polymarket_secret="test_secret"
     )
@@ -19,7 +29,7 @@ def test_settings_default_values():
 
 def test_settings_celery_broker_fallback():
     """Test that celery_broker falls back to redis_url."""
-    settings = Settings(
+    settings = IsolatedSettings(
         polymarket_api_key="test_key",
         polymarket_secret="test_secret",
         redis_url="redis://custom:6379/0"
@@ -30,7 +40,7 @@ def test_settings_celery_broker_fallback():
 
 def test_settings_trading_disabled_by_default():
     """Test that trading is disabled by default for safety."""
-    settings = Settings(
+    settings = IsolatedSettings(
         polymarket_api_key="test_key",
         polymarket_secret="test_secret"
     )

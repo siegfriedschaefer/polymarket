@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Any
+
 import structlog
 
 from polymarket_bot.api.client import PolymarketClient

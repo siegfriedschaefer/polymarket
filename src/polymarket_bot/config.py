@@ -1,6 +1,7 @@
 """Configuration management using Pydantic settings."""
 
 from typing import Literal
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -24,6 +25,7 @@ class Settings(BaseSettings):
     polymarket_secret: str = Field(..., description="Polymarket secret key")
     polymarket_chain_id: int = Field(default=137, description="Polygon chain ID (137 for mainnet)")
     polymarket_passphrase: str = Field(default="", description="Optional passphrase")
+    polymarket_private_key: str = Field(default="", description="Ethereum private key (required for trading)")
 
     # Trading Configuration
     max_position_size: float = Field(default=100.0, description="Maximum position size in USD")

@@ -1,8 +1,9 @@
 """Logging configuration using structlog."""
 
-import sys
 import logging
+import sys
 from pathlib import Path
+
 import structlog
 from structlog.typing import EventDict, WrappedLogger
 

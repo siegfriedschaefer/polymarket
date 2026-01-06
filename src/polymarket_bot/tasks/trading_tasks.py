@@ -1,11 +1,12 @@
 """Celery tasks for trading operations."""
 
 import asyncio
+
 import structlog
 
-from polymarket_bot.tasks.celery_app import celery_app
 from polymarket_bot.api.client import get_client
 from polymarket_bot.strategies.example import ExampleStrategy
+from polymarket_bot.tasks.celery_app import celery_app
 
 logger = structlog.get_logger(__name__)
 
