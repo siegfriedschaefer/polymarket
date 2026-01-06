@@ -1,5 +1,7 @@
 """Polymarket API client wrapper."""
 
+from typing import Optional
+
 import structlog
 from py_clob_client.client import ClobClient
 from py_clob_client.clob_types import ApiCreds
@@ -12,8 +14,13 @@ logger = structlog.get_logger(__name__)
 class PolymarketClient:
     """Wrapper around Polymarket CLOB client with enhanced functionality."""
 
-    def __init__(self) -> None:
-        """Initialize the Polymarket client."""
+    def __init__(self, enable_portfolio_tracking: bool = True) -> None:
+        """
+        Initialize the Polymarket client.
+
+        Args:
+            enable_portfolio_tracking: If True, enables local portfolio state tracking
+        """
         self.credentials = ApiCreds(
             api_key=settings.polymarket_api_key,
             api_secret=settings.polymarket_secret,
@@ -34,11 +41,38 @@ class PolymarketClient:
 
         self.client = ClobClient(**client_kwargs)
 
+        # Portfolio tracking setup
+        self.portfolio_tracking_enabled = enable_portfolio_tracking
+        self._portfolio_id: Optional[int] = None
+
+        if enable_portfolio_tracking:
+            try:
+                from polymarket_bot.portfolio import PortfolioService, MarketType, init_db
+
+                # Initialize database
+                init_db()
+
+                # Get or create portfolio for this account
+                with PortfolioService() as ps:
+                    portfolio = ps.ensure_portfolio(
+                        name="polymarket_main",
+                        market_type=MarketType.PREDICTION,
+                        exchange="polymarket",
+                        wallet_address=settings.polymarket_private_key[:10] + "..." if settings.polymarket_private_key else None,
+                    )
+                    self._portfolio_id = portfolio.id
+
+                logger.info("portfolio_tracking_enabled", portfolio_id=self._portfolio_id)
+            except Exception as e:
+                logger.warning("portfolio_tracking_init_failed", error=str(e))
+                self.portfolio_tracking_enabled = False
+
         logger.info(
             "polymarket_client_initialized",
             chain_id=settings.polymarket_chain_id,
             trading_enabled=settings.enable_trading,
             has_private_key=bool(settings.polymarket_private_key),
+            portfolio_tracking=self.portfolio_tracking_enabled,
         )
 
     async def get_markets(self, **kwargs):
@@ -110,11 +144,38 @@ class PolymarketClient:
             raise
 
     async def get_positions(self):
-        """Get current positions."""
+        """
+        Get current positions from local portfolio database.
+
+        This returns positions tracked in our own database, not from Polymarket API.
+        To sync positions with actual Polymarket state, use sync_positions() or
+        record trades via place_order().
+
+        Returns:
+            Portfolio summary with all open positions
+        """
+        if not self.portfolio_tracking_enabled:
+            logger.warning("portfolio_tracking_disabled")
+            return {"error": "Portfolio tracking is not enabled"}
+
         try:
-            positions = self.client.get_positions()
-            logger.info("fetched_positions", count=len(positions) if positions else 0)
-            return positions
+            from polymarket_bot.portfolio import PortfolioService
+            from polymarket_bot.portfolio.models import Portfolio
+
+            with PortfolioService() as ps:
+                portfolio = ps.db.query(Portfolio).filter(Portfolio.id == self._portfolio_id).first()
+                if not portfolio:
+                    logger.error("portfolio_not_found", portfolio_id=self._portfolio_id)
+                    return {"error": "Portfolio not found"}
+
+                summary = ps.get_portfolio_summary(portfolio)
+                logger.info(
+                    "fetched_positions",
+                    count=summary.get("open_positions_count", 0),
+                    total_value=summary.get("total_value", 0),
+                )
+                return summary
+
         except Exception as e:
             logger.error("error_fetching_positions", error=str(e))
             raise
