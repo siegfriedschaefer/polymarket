@@ -1,6 +1,25 @@
 # Polymarket Trading Bot
 
-An automated trading bot for Polymarket built with Python, featuring background task processing with Celery and designed for easy containerization with Docker.
+An automated trading bot for Polymarket built with Claude, written in Python.
+I want to find out how sophisticated and useful AI could be by implementing such a system.
+I don't want to code anything on my side here, I help just with hints and bug fixing issues.
+If you are interested in the problems which arose during implementation, than have a look at the journal.
+
+                    AI      Me
+Domain Knowledge| ?     |   25%
+Research        | 80%   |   20%
+Specification   | 95%   |   5% (Idea)
+Code            | 100%  |   0%
+Test            | 100%  |   0%
+Debugging       | 90%   |   10%
+Integration     | 100%  |   0%
+Dokumentation   | 90%   |   10%
+
+Time / Costs
+20260105 - 2h - 137000 token (of 200000)
+20260106 - 3h -  70000 token (of 200000)
+
+This bot (service? )features background task processing with Celery and it is designed for easy containerization with Docker.
 
 ## Architecture Overview
 
