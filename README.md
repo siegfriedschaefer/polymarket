@@ -17,8 +17,10 @@ If you are interested in the problems which arose during implementation, than ha
 | Documentation    | 90%   | 10%         |
 
 Time / Costs
-20260105 - 2h - 137000 token (of 200000)
-20260106 - 3h -  70000 token (of 200000)
+| Date      | Time | Tokens             |
+|---------------------------------------|
+| 20260106  |  3h  | 70000              |
+| 20260105  |  2h  | 137000             |
 
 This bot (service? )features background task processing with Celery and it is designed for easy containerization with Docker.
 
