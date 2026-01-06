@@ -5,15 +5,16 @@ I want to find out how sophisticated and useful AI could be by implementing such
 I don't want to code anything on my side here, I help just with hints and bug fixing issues.
 If you are interested in the problems which arose during implementation, than have a look at the journal.
 
-                    AI      Me
-Domain Knowledge| ?     |   25%
-Research        | 80%   |   20%
-Specification   | 95%   |   5% (Idea)
-Code            | 100%  |   0%
-Test            | 100%  |   0%
-Debugging       | 90%   |   10%
-Integration     | 100%  |   0%
-Dokumentation   | 90%   |   10%
+|                  | AI    | Me          |
+|------------------|-------|-------------|
+| Domain Knowledge | ?     | 25%         |
+| Research         | 80%   | 20%         |
+| Specification    | 95%   | 5% (Idea)   |
+| Code             | 100%  | 0%          |
+| Test             | 100%  | 0%          |
+| Debugging        | 90%   | 10%         |
+| Integration      | 100%  | 0%          |
+| Documentation    | 90%   | 10%         |
 
 Time / Costs
 20260105 - 2h - 137000 token (of 200000)
