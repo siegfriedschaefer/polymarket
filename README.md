@@ -16,9 +16,10 @@ If you are interested in the problems which arose during implementation, than ha
 | Integration      | 100%  | 0%          |
 | Documentation    | 90%   | 10%         |
 
-Time / Costs
+## Time / Costs
+
 | Date      | Time | Tokens             |
-|---------------------------------------|
+|-----------|------|--------------------|
 | 20260106  |  3h  | 70000              |
 | 20260105  |  2h  | 137000             |
 
