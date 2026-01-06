@@ -8,15 +8,17 @@ An automated trading bot for Polymarket built with Python, featuring background 
 polymarket/
 ├── src/polymarket_bot/
 │   ├── api/              # Polymarket API client wrapper
+│   ├── portfolio/        # Portfolio tracking system (market-agnostic)
 │   ├── strategies/       # Trading strategy implementations
 │   ├── tasks/            # Celery background tasks
 │   ├── utils/            # Utility functions and logging
 │   ├── config.py         # Configuration management
 │   └── main.py           # Main application entry point
 ├── tests/                # Test suite
+├── examples/             # Example scripts and usage
 ├── config/               # Configuration files
 ├── logs/                 # Application logs
-├── data/                 # Data storage
+├── data/                 # Data storage (portfolio.db)
 ├── docker-compose.yml    # Docker orchestration
 ├── Dockerfile            # Container definition
 └── requirements.txt      # Python dependencies
@@ -25,6 +27,7 @@ polymarket/
 ## Features
 
 - **Polymarket API Integration**: Full wrapper around py-clob-client
+- **Portfolio Tracking**: Market-agnostic position and P&L tracking with persistent database
 - **Background Tasks**: Celery-based task queue for scheduled trading
 - **Structured Logging**: JSON logging with structlog
 - **Configuration Management**: Environment-based config with Pydantic
@@ -161,9 +164,15 @@ All configuration is managed through environment variables in `.env`:
 
 ### Infrastructure
 - `REDIS_URL`: Redis connection URL (default: `redis://localhost:6379/0`)
+- `DATABASE_URL`: Portfolio database URL (default: `sqlite:///./data/portfolio.db`)
 - `LOG_LEVEL`: Logging level (default: `INFO`)
 
 See `.env.example` for all available options.
+
+**Note**: For production, consider using PostgreSQL for the portfolio database:
+```bash
+DATABASE_URL=postgresql://user:pass@localhost/polymarket_portfolio
+```
 
 ## Development
 
@@ -171,6 +180,12 @@ See `.env.example` for all available options.
 
 **src/polymarket_bot/api/**: API client wrapper
 - `client.py`: Polymarket CLOB client wrapper with enhanced functionality
+
+**src/polymarket_bot/portfolio/**: Portfolio tracking system
+- `models.py`: SQLAlchemy models (Portfolio, Position, Transaction)
+- `service.py`: Portfolio management service (PortfolioService)
+- `database.py`: Database session management
+- `README.md`: Complete portfolio tracking documentation
 
 **src/polymarket_bot/strategies/**: Trading strategies
 - `base.py`: Base strategy class to inherit from
@@ -214,6 +229,61 @@ from polymarket_bot.strategies.my_strategy import MyStrategy
 self.strategy = MyStrategy(self.client)
 ```
 
+### Portfolio Tracking
+
+The bot includes a market-agnostic portfolio tracking system that works with Polymarket, crypto exchanges, and other asset types.
+
+**Quick Start:**
+
+```python
+from polymarket_bot.portfolio import PortfolioService, MarketType, TransactionType
+from decimal import Decimal
+
+with PortfolioService() as ps:
+    # Create portfolio
+    portfolio = ps.ensure_portfolio(
+        name="my_polymarket",
+        market_type=MarketType.PREDICTION,
+        exchange="polymarket"
+    )
+
+    # Add funds
+    ps.add_funds(portfolio, Decimal("1000.00"))
+
+    # Record a trade
+    position, tx = ps.record_trade(
+        portfolio=portfolio,
+        transaction_type=TransactionType.BUY,
+        asset_id="token_yes_123",
+        quantity=Decimal("100"),
+        price=Decimal("0.65"),
+        fee=Decimal("0.50")
+    )
+
+    # Get portfolio summary
+    summary = ps.get_portfolio_summary(portfolio)
+    print(f"Total P&L: ${summary['total_pnl']}")
+```
+
+**Features:**
+- Persistent state across restarts (SQLite/PostgreSQL)
+- Real-time P&L tracking (unrealized and realized)
+- Complete transaction audit trail
+- Multi-portfolio support (track multiple exchanges)
+- Works with any market type (prediction, crypto, stocks, forex)
+
+**Run the example:**
+```bash
+PYTHONPATH=src python3 examples/portfolio_example.py
+```
+
+**View the database:**
+```bash
+sqlite3 data/portfolio.db
+# or
+cat src/polymarket_bot/portfolio/README.md  # Full documentation
+```
+
 ### Running Tests
 
 ```bash
@@ -233,7 +303,7 @@ make lint          # Run linting checks
 The bot includes scheduled tasks configured in `tasks/celery_app.py`:
 
 - **run_strategy**: Executes trading strategy every 5 minutes
-- **update_positions**: Updates position information every minute
+- **update_positions**: Queries local portfolio database every minute for position tracking
 
 You can trigger tasks manually:
 
@@ -241,6 +311,8 @@ You can trigger tasks manually:
 from polymarket_bot.tasks.trading_tasks import run_strategy
 result = run_strategy.delay()
 ```
+
+Note: The `update_positions` task queries the local portfolio database, not the Polymarket API. This provides persistent position tracking across restarts.
 
 ## Safety Features
 
