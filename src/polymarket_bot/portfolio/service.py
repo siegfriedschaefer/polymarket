@@ -433,3 +433,39 @@ class PortfolioService:
         logger.info("funds_withdrawn", portfolio_id=portfolio.id, amount=float(amount))
 
         return transaction
+
+    def reset_portfolio(self, portfolio: Portfolio) -> None:
+        """
+        Reset portfolio to initial state by clearing all positions, transactions, and funds.
+
+        Args:
+            portfolio: Portfolio to reset
+
+        Warning:
+            This operation cannot be undone. All trading history will be permanently deleted.
+        """
+        # Delete all transactions
+        self.db.query(Transaction).filter(
+            Transaction.portfolio_id == portfolio.id
+        ).delete()
+
+        # Delete all positions
+        self.db.query(Position).filter(
+            Position.portfolio_id == portfolio.id
+        ).delete()
+
+        # Reset portfolio balances
+        portfolio.cash_balance = Decimal(0)
+        portfolio.total_value = Decimal(0)
+        portfolio.unrealized_pnl = Decimal(0)
+        portfolio.realized_pnl = Decimal(0)
+        portfolio.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(portfolio)
+
+        logger.info(
+            "portfolio_reset",
+            portfolio_id=portfolio.id,
+            name=portfolio.name
+        )
