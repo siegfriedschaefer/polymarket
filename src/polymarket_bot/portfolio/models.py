@@ -135,7 +135,7 @@ class Position(Base):
     last_updated = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Additional metadata (JSON-serializable data)
-    metadata = Column(Text)  # Store JSON for market-specific data
+    extra_data = Column(Text)  # Store JSON for market-specific data
 
     # Relationships
     portfolio = relationship("Portfolio", back_populates="positions")
@@ -195,7 +195,7 @@ class Transaction(Base):
 
     # Metadata
     notes = Column(Text)
-    metadata = Column(Text)  # JSON for additional data
+    extra_data = Column(Text)  # JSON for additional data
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # Relationships

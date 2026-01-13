@@ -133,23 +133,31 @@ class PortfolioService:
         Returns:
             (position, transaction) tuple
         """
-        # Auto-determine side if not provided
-        if side is None:
-            side = PositionSide.LONG if transaction_type == TransactionType.BUY else PositionSide.SHORT
+        # Build position query filters
+        filters = [
+            Position.portfolio_id == portfolio.id,
+            Position.asset_id == asset_id,
+            Position.is_open == True,
+        ]
 
-        # Find or create position
+        # For SELL without explicit side, find any open position
+        # For BUY, default to LONG if side not specified
+        if side is not None:
+            filters.append(Position.side == side.value)
+        elif transaction_type == TransactionType.BUY:
+            side = PositionSide.LONG
+            filters.append(Position.side == side.value)
+
+        # Find existing position
         position = (
             self.db.query(Position)
-            .filter(
-                and_(
-                    Position.portfolio_id == portfolio.id,
-                    Position.asset_id == asset_id,
-                    Position.side == side.value,
-                    Position.is_open == True,
-                )
-            )
+            .filter(and_(*filters))
             .first()
         )
+
+        # Set side from existing position if selling
+        if transaction_type == TransactionType.SELL and position is not None and side is None:
+            side = PositionSide(position.side)
 
         # Calculate amounts
         total_amount = quantity * price
